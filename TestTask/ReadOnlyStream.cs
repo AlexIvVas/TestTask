@@ -5,8 +5,7 @@ namespace TestTask
 {
     public class ReadOnlyStream : IReadOnlyStream, IDisposable
     {
-        private Stream _localStream;
-        private TextReader _localReader;
+        private TextReader _localStream;
 
         /// <summary>
         /// Конструктор класса. 
@@ -24,8 +23,7 @@ namespace TestTask
                 throw new ArgumentNullException("fileFullPath");
             try
             {
-                _localStream = new FileStream(fileFullPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                _localReader = new StreamReader(_localStream);
+                _localStream = new StreamReader(fileFullPath);
                 IsEof = false;
             }
             catch
@@ -55,14 +53,12 @@ namespace TestTask
             // TODO : Необходимо считать очередной символ из _localStream
             // Реализуем чтение одного символа из текстового потока.
             // После достижения коца файла закрываем потоки.
-            int iCh;
             char ch;
 
             try
             {
-                iCh = _localReader.Read();
-                ch = (char)iCh;
-                if ((iCh = _localReader.Peek()) == -1)
+                ch = (char)_localStream.Read();
+                if (_localStream.Peek() < 0)
                 {
                     IsEof = true;
                     Dispose();
@@ -90,22 +86,18 @@ namespace TestTask
                 return;
             }
 
-            _localStream.Position = 0;
+            (_localStream as StreamReader).BaseStream.Position = 0;
             IsEof = false;
         }
 
         // Метод который гарантирует закрытие потоков.
         public void Dispose()
         {
-            if (_localReader != null)
-            {
-                _localReader.Close();
-                _localReader.Dispose();
-            }
             if (_localStream != null)
             {
                 _localStream.Close();
                 _localStream.Dispose();
+                _localStream = null;
             }
         }
     }

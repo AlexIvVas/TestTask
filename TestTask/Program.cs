@@ -115,19 +115,46 @@ namespace TestTask
         /// <returns>Коллекция статистик по каждой букве, что была прочитана из стрима.</returns>
         private static IList<LetterStats> FillDoubleLetterStats(IReadOnlyStream stream)
         {
-            List<string> lstStr = new List<string>();
             List<LetterStats> lst = new List<LetterStats>();
-            char c;
+            LetterStats ls;
+            int index;
+            char c1;
             stream.ResetPositionToStart();
+            char c = stream.ReadNextChar();
             while (!stream.IsEof)
             {
-                c = stream.ReadNextChar();
-                // TODO : заполнять статистику с использованием метода IncStatistic. Учёт букв - НЕ регистрозависимый.
-
                 if (char.IsLetter(c))
-                    lstStr.Add(c.ToString());
+                {
+                    c1 = stream.ReadNextChar();
+                    if (char.IsLetter(c1))
+                    {
+                        if (char.ToLower(c) == char.ToLower(c1))
+                        {
+                            ls = lst.FirstOrDefault(x => x.Letter == (c.ToString() + c1.ToString()));
+                            index = lst.IndexOf(ls);
+                            if (ls.Letter == null)
+                            {
+                                ls.Letter = (c.ToString() + c1.ToString());
+                                ls.Count = 1;
+                                lst.Add(ls);
+                            }
+                            else
+                                lst[index] = IncStatistic(ls);
+                            if (!stream.IsEof)
+                                c = stream.ReadNextChar();
+                        }
+                        else
+                            c = c1;
+                    }
+                    else
+                        c = c1;
+                }
+                else
+                {
+                    if (!stream.IsEof)
+                        c = stream.ReadNextChar();
+                }
             }
-            CharSearch(lstStr, lst);
             return lst;
 
             //throw new NotImplementedException();
@@ -199,38 +226,6 @@ namespace TestTask
         {
             letterStats.Count++;
             return letterStats;
-        }
-
-        // Дополнительный метод для выбора пар букв, с использованием рекурсии
-        private static void CharSearch(IList<string> lstStr, IList<LetterStats> letters)
-        {
-            if (lstStr.Count > 0)
-            {
-                string s = lstStr.First();
-                string s1;
-                LetterStats ls;
-                int index;
-                int index1;
-                lstStr.RemoveAt(0);
-                if ((s1 = lstStr.FirstOrDefault(x => x.ToLower() == s.ToLower())) != null)
-                {
-                    index = lstStr.IndexOf(s1);
-                    ls = letters.FirstOrDefault(x => x.Letter == (s + s1));
-                    if (ls.Letter == null)
-                    {
-                        ls.Letter = s + s1;
-                        ls.Count = 1;
-                        letters.Add(ls);
-                    }
-                    else
-                    {
-                        index1 = letters.IndexOf(ls);
-                        letters[index1] = IncStatistic(ls);
-                    }
-                    lstStr.RemoveAt(index);
-                }
-                CharSearch(lstStr, letters);
-            }
         }
     }
 }
